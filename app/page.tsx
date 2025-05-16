@@ -1,3 +1,5 @@
+"use client"
+
 import SurveyForm from "@/components/survey-form"
 import { AccessibilityToggle } from "@/components/accessibility-toggle"
 import Image from "next/image"
@@ -7,23 +9,23 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 py-8">
       <div className="container mx-auto px-4">
         <header className="mb-12 relative">
-          {/* Top bar with logo and accessibility toggle */}
+          {/* Top bar with accessibility toggle and logo */}
           <div className="flex justify-between items-center mb-8">
-            {/* RTA Logo - larger size */}
+            {/* Accessibility Toggle */}
+            <div className="flex-grow-0">
+              <AccessibilityToggle />
+            </div>
+
+            {/* RTA Logo */}
             <div className="flex-grow-0">
               <Image
                 src="/images/rta-logo.png"
                 alt="RTA - Roads & Transport Authority"
-                width={200}
-                height={70}
+                width={120}
+                height={40}
                 className="object-contain"
                 priority
               />
-            </div>
-
-            {/* Accessibility Toggle */}
-            <div className="flex-grow-0">
-              <AccessibilityToggle />
             </div>
           </div>
 
@@ -34,7 +36,7 @@ export default function Home() {
           </div>
 
           <div className="flex justify-center">
-            <div className="inline-block bg-white/80 backdrop-blur-sm px-8 py-4 rounded-xl shadow-sm">
+            <div className="inline-block bg-white/80 backdrop-blur-sm px-8 py-4 rounded-xl shadow-sm mb-4">
               <div className="flex flex-wrap justify-center gap-2">
                 <button className="px-5 py-2 text-sm bg-red-600 text-white rounded-full shadow-sm hover:bg-red-700 transition-colors">
                   English

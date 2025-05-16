@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { Heart, ChevronRight, ChevronLeft, Camera, X, Train, TramFrontIcon as Tram, Volume2 } from "lucide-react"
+import { Heart, ChevronRight, ChevronLeft, Camera, X, Volume2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -111,6 +111,51 @@ const steps = [
   { id: "photos", title: "Share Photos" },
 ]
 
+// Create a function to get dynamic categories based on transport type
+// Add this function before the SurveyForm component
+
+function getCategoriesForTransportType(transportType: string) {
+  const baseCategories = [
+    { id: "safety", title: "1. Safety & Security", bgColor: "bg-blue-50", textColor: "text-blue-800" },
+    {
+      id: "wayfinding-stations",
+      title: "2. Way finding - Stations",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-800",
+    },
+    { id: "punctuality", title: "4. Punctuality", bgColor: "bg-cyan-50", textColor: "text-cyan-800" },
+    { id: "comfort", title: "5. Comfort", bgColor: "bg-teal-50", textColor: "text-teal-800" },
+    { id: "cleanliness", title: "6. Cleanliness", bgColor: "bg-green-50", textColor: "text-green-800" },
+    { id: "employees", title: "7. Friendliness of Employees", bgColor: "bg-amber-50", textColor: "text-amber-800" },
+    { id: "feedback", title: "8. Your Feedback", bgColor: "bg-rose-50", textColor: "text-rose-800" },
+  ]
+
+  // Insert the transport-specific category at index 2
+  if (transportType === "tram") {
+    return [
+      ...baseCategories.slice(0, 2),
+      {
+        id: "wayfinding-trains",
+        title: "3. Way finding - Trams",
+        bgColor: "bg-purple-50",
+        textColor: "text-purple-800",
+      },
+      ...baseCategories.slice(2),
+    ]
+  } else {
+    return [
+      ...baseCategories.slice(0, 2),
+      {
+        id: "wayfinding-trains",
+        title: "3. Way finding - Trains",
+        bgColor: "bg-purple-50",
+        textColor: "text-purple-800",
+      },
+      ...baseCategories.slice(2),
+    ]
+  }
+}
+
 // Categories with numbering
 const categories = [
   { id: "safety", title: "1. Safety & Security", bgColor: "bg-blue-50", textColor: "text-blue-800" },
@@ -214,6 +259,7 @@ export default function SurveyForm() {
   const [questions, setQuestions] = useState<any>(metroQuestions)
   const [stationList, setStationList] = useState<string[]>(stations)
   const [hearingAssistance, setHearingAssistance] = useState(false)
+  const [dynamicCategories, setDynamicCategories] = useState(getCategoriesForTransportType("metro"))
 
   // Update the form defaultValues to include nolCardType
   const form = useForm<z.infer<typeof formSchema>>({
@@ -245,10 +291,18 @@ export default function SurveyForm() {
       setQuestions(metroQuestions)
       setStationList(stations)
       setTransportType("metro")
+      setDynamicCategories(getCategoriesForTransportType("metro"))
+      localStorage.setItem("transportType", "metro")
+      // Dispatch storage event to notify other components
+      window.dispatchEvent(new Event("storage"))
     } else if (watchTransportType === "tram") {
       setQuestions(tramQuestions)
       setStationList(tramStations)
       setTransportType("tram")
+      setDynamicCategories(getCategoriesForTransportType("tram"))
+      localStorage.setItem("transportType", "tram")
+      // Dispatch storage event to notify other components
+      window.dispatchEvent(new Event("storage"))
     }
   }, [watchTransportType])
 
@@ -432,8 +486,28 @@ export default function SurveyForm() {
     <>
       <Card className="max-w-4xl mx-auto bg-white shadow-xl border-none overflow-hidden">
         <div className="bg-gradient-to-r from-blue-700 to-blue-900 p-6 text-white shadow-inner">
-          <h2 className="text-xl font-bold font-serif">{steps[currentStep].title}</h2>
-          <Progress value={progress} className="h-2 mt-4 bg-white/30" />
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-bold font-serif">{steps[currentStep].title}</h2>
+
+            {/* Transport type indicator */}
+            {transportType && (
+              <div className="flex items-center bg-white/20 px-3 py-1.5 rounded-full">
+                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-2">
+                  <Image
+                    src={transportType === "metro" ? "/images/metro-icon.png" : "/images/tram-icon.png"}
+                    alt={transportType === "metro" ? "Dubai Metro" : "Dubai Tram"}
+                    width={16}
+                    height={16}
+                    className="w-4 h-4 object-contain brightness-0 invert"
+                  />
+                </div>
+                <span className="text-sm font-medium text-white">
+                  {transportType === "metro" ? "Dubai Metro" : "Dubai Tram"}
+                </span>
+              </div>
+            )}
+          </div>
+          <Progress value={progress} className="h-2 mt-2 bg-white/30" />
         </div>
 
         <CardContent className="p-6">
@@ -476,8 +550,14 @@ export default function SurveyForm() {
                                   }
                                 }}
                               >
-                                <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-3">
-                                  <Train className="w-8 h-8 text-white" />
+                                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-3">
+                                  <Image
+                                    src="/images/metro-icon.png"
+                                    alt="Dubai Metro"
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 object-contain brightness-0 invert"
+                                  />
                                 </div>
                                 <span className="font-medium text-red-800">Dubai Metro</span>
                                 {hearingAssistance && (
@@ -509,7 +589,13 @@ export default function SurveyForm() {
                                 }}
                               >
                                 <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-3">
-                                  <Tram className="w-8 h-8 text-white" />
+                                  <Image
+                                    src="/images/tram-icon.png"
+                                    alt="Dubai Tram"
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 object-contain brightness-0 invert"
+                                  />
                                 </div>
                                 <span className="font-medium text-blue-800">Dubai Tram</span>
                                 {hearingAssistance && <span className="sr-only">Press Enter to select Dubai Tram</span>}
@@ -855,8 +941,10 @@ export default function SurveyForm() {
                 <div className="space-y-6 animate-in fade-in duration-300">
                   <div className="grid grid-cols-1 gap-4">
                     {/* Safety & Security */}
-                    <div className={`${categories[0].bgColor} p-4 rounded-lg border-l-4 border-blue-600`}>
-                      <h3 className={`font-medium ${categories[0].textColor} mb-3`}>{categories[0].title}</h3>
+                    <div className={`${dynamicCategories[0].bgColor} p-4 rounded-lg border-l-4 border-blue-600`}>
+                      <h3 className={`font-medium ${dynamicCategories[0].textColor} mb-3`}>
+                        {dynamicCategories[0].title}
+                      </h3>
                       <div className="space-y-3">
                         {questions.safety.map((q: any, index: number) => (
                           <QuickRatingQuestion
@@ -872,8 +960,10 @@ export default function SurveyForm() {
                     </div>
 
                     {/* Way finding - Stations */}
-                    <div className={`${categories[1].bgColor} p-4 rounded-lg border-l-4 border-indigo-600`}>
-                      <h3 className={`font-medium ${categories[1].textColor} mb-3`}>{categories[1].title}</h3>
+                    <div className={`${dynamicCategories[1].bgColor} p-4 rounded-lg border-l-4 border-indigo-600`}>
+                      <h3 className={`font-medium ${dynamicCategories[1].textColor} mb-3`}>
+                        {dynamicCategories[1].title}
+                      </h3>
                       <div className="space-y-3">
                         {questions.wayfindingStations.map((q: any, index: number) => (
                           <QuickRatingQuestion
@@ -888,9 +978,11 @@ export default function SurveyForm() {
                       </div>
                     </div>
 
-                    {/* Way finding - Trains */}
-                    <div className={`${categories[2].bgColor} p-4 rounded-lg border-l-4 border-purple-600`}>
-                      <h3 className={`font-medium ${categories[2].textColor} mb-3`}>{categories[2].title}</h3>
+                    {/* Way finding - Trains/Trams */}
+                    <div className={`${dynamicCategories[2].bgColor} p-4 rounded-lg border-l-4 border-purple-600`}>
+                      <h3 className={`font-medium ${dynamicCategories[2].textColor} mb-3`}>
+                        {dynamicCategories[2].title}
+                      </h3>
                       <div className="space-y-3">
                         {questions.wayfindingTrains.map((q: any, index: number) => (
                           <QuickRatingQuestion
@@ -913,8 +1005,10 @@ export default function SurveyForm() {
                 <div className="space-y-6 animate-in fade-in duration-300">
                   <div className="grid grid-cols-1 gap-4">
                     {/* Punctuality */}
-                    <div className={`${categories[3].bgColor} p-4 rounded-lg border-l-4 border-cyan-600`}>
-                      <h3 className={`font-medium ${categories[3].textColor} mb-3`}>{categories[3].title}</h3>
+                    <div className={`${dynamicCategories[3].bgColor} p-4 rounded-lg border-l-4 border-cyan-600`}>
+                      <h3 className={`font-medium ${dynamicCategories[3].textColor} mb-3`}>
+                        {dynamicCategories[3].title}
+                      </h3>
                       <div className="space-y-3">
                         {questions.punctuality.map((q: any, index: number) => (
                           <QuickRatingQuestion
@@ -930,8 +1024,10 @@ export default function SurveyForm() {
                     </div>
 
                     {/* Comfort */}
-                    <div className={`${categories[4].bgColor} p-4 rounded-lg border-l-4 border-teal-600`}>
-                      <h3 className={`font-medium ${categories[4].textColor} mb-3`}>{categories[4].title}</h3>
+                    <div className={`${dynamicCategories[4].bgColor} p-4 rounded-lg border-l-4 border-teal-600`}>
+                      <h3 className={`font-medium ${dynamicCategories[4].textColor} mb-3`}>
+                        {dynamicCategories[4].title}
+                      </h3>
                       <div className="space-y-3">
                         {questions.comfort.map((q: any, index: number) => (
                           <QuickRatingQuestion
@@ -947,8 +1043,10 @@ export default function SurveyForm() {
                     </div>
 
                     {/* Cleanliness */}
-                    <div className={`${categories[5].bgColor} p-4 rounded-lg border-l-4 border-green-600`}>
-                      <h3 className={`font-medium ${categories[5].textColor} mb-3`}>{categories[5].title}</h3>
+                    <div className={`${dynamicCategories[5].bgColor} p-4 rounded-lg border-l-4 border-green-600`}>
+                      <h3 className={`font-medium ${dynamicCategories[5].textColor} mb-3`}>
+                        {dynamicCategories[5].title}
+                      </h3>
                       <div className="space-y-3">
                         {questions.cleanliness.map((q: any, index: number) => (
                           <QuickRatingQuestion
@@ -964,8 +1062,10 @@ export default function SurveyForm() {
                     </div>
 
                     {/* Friendliness of Employees */}
-                    <div className={`${categories[6].bgColor} p-4 rounded-lg border-l-4 border-amber-600`}>
-                      <h3 className={`font-medium ${categories[6].textColor} mb-3`}>{categories[6].title}</h3>
+                    <div className={`${dynamicCategories[6].bgColor} p-4 rounded-lg border-l-4 border-amber-600`}>
+                      <h3 className={`font-medium ${dynamicCategories[6].textColor} mb-3`}>
+                        {dynamicCategories[6].title}
+                      </h3>
                       <div className="space-y-3">
                         {questions.employees.map((q: any, index: number) => (
                           <QuickRatingQuestion
@@ -981,8 +1081,10 @@ export default function SurveyForm() {
                     </div>
 
                     {/* Open-ended Questions */}
-                    <div className={`${categories[7].bgColor} p-4 rounded-lg border-l-4 border-rose-600`}>
-                      <h3 className={`font-medium ${categories[7].textColor} mb-3`}>{categories[7].title}</h3>
+                    <div className={`${dynamicCategories[7].bgColor} p-4 rounded-lg border-l-4 border-rose-600`}>
+                      <h3 className={`font-medium ${dynamicCategories[7].textColor} mb-3`}>
+                        {dynamicCategories[7].title}
+                      </h3>
                       <div className="space-y-4">
                         <FormField
                           control={form.control}
